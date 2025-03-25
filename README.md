@@ -10,3 +10,5 @@ Our pipeline offers the following improvements compare to traditional KD optimiz
 - More flexible training process. Parameters of the model can be easily changed to optimize for accuracy, speed or generalization.
 
 ## Functionality description
+The main steps of the KD process is summarized below:
+1. d
