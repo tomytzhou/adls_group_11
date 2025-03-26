@@ -23,6 +23,8 @@ Our pipeline can use either the built-in optimizer (optuna) or the reinforcement
 9. At the end of the last episode, the global best model will be selected for post NAS training. This step can be skipped if one wish to prevent overfitting or if the model has a fast converging nature.
 10. The trained best model will be tested using the glue score function.
 
+![Screenshot1](https://github.com/Jerry7234234/AVDL_Labs/blob/main/quantization.png)
+
 ### Data loader
 This function uses a checkpoint of a pretrained model from Hugging face to load the dataset and the tokenizer.
 
