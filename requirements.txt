@@ -1,1 +1,8 @@
-
+torch
+transformers
+datasets
+evaluate
+numpy
+optuna
+copy
+pytest
