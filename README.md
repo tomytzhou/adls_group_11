@@ -44,7 +44,7 @@ After training all the selected candidate models during a single episode, we nee
 Our training loop includes a controller that uses past knowledge about model distillation to make prediction that selects the most promising candidates for the next episode. We used a LSTM unit as our controller. It takes as input the data of the global best model, the previous episode best model and all the candidates from the previous episode.
 
 ### Full KD trainer
-This function is used to perform post NAS finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset.
+This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset.
 
 ### GLUE score calculator
 The function that evaluates the gleu score for each best performing model category on the target language tasks. Within the function a selection of language tasks are selected and their corresponding datasets are loaded using the datasets library. The function first uses the trainer module from the transformer library to finetune the model for a few epoches. There also an option to disable finetuning. It then uses the trainer module's built-in evaluation function to compute a score for the datasets previously loaded.
