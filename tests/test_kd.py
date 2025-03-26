@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pytest
 import torch
 import torch.optim as optim
-from ADLS_project.kd.kd import Controller, KD
+from kd.kd import Controller, KD
 
 kd = KD(model_type='bert', checkpoint="bert-base-uncased", dataset_name="xu-song/cc100-samples")  # or your actual args
 
