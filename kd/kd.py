@@ -334,7 +334,7 @@ class KD:
                 study = optuna.create_study(direction="maximize", sampler=sampler)  # Minimize loss
                 study.optimize(self.objective, n_trials=10)
 
-        def run_rl_kd(self, M=20, N=5, epsilon=1.0, epsilon_min=0.05, epsilon_decay=0.05, pool_size=150):
+        def run_rl_kd(self, M=20, N=5, epsilon=1.0, epsilon_min=0.05, epsilon_decay=0.05, pool_size=150, pdt=False):
                 # Initialise controller
                 controller = Controller(self.search_space).to('cuda')
                 controller_optimizer = torch.optim.RMSprop(controller.parameters(), lr=1e-4)
@@ -418,26 +418,29 @@ class KD:
                                         memory[tuple(state)] = reward
                                 candidate_models.append(student_model)
 
-                # Update best states
-                best_idx = np.argmax(episode_rewards)
-                episode_best_state = candidate_states[best_idx]
-                episode_best_reward = episode_rewards[best_idx]
-                episode_best_model = candidate_models[best_idx]
-                # print(episode_best_model)
-                previous_best = {'state': episode_best_state, 'reward': episode_best_reward}
-                print([episode_best_reward, global_best['reward']])
-                if episode_best_reward > global_best['reward']:
-                        global_best = {'state': episode_best_state, 'reward': episode_best_reward}
-                        best_model = episode_best_model
-                # print(best_model)
-                # Train controller
-                training_data = list(zip(candidate_states, episode_rewards))
-                training_data.append((global_best['state'], global_best['reward']))
-                training_data.append((previous_best['state'], previous_best['reward']))
-                self.train_controller(controller, controller_optimizer, training_data,
-                                previous_best['state'], global_best['state'])
+                        # Update best states
+                        best_idx = np.argmax(episode_rewards)
+                        episode_best_state = candidate_states[best_idx]
+                        episode_best_reward = episode_rewards[best_idx]
+                        episode_best_model = candidate_models[best_idx]
+                        # print(episode_best_model)
+                        previous_best = {'state': episode_best_state, 'reward': episode_best_reward}
+                        print([episode_best_reward, global_best['reward']])
+                        if episode_best_reward > global_best['reward']:
+                                global_best = {'state': episode_best_state, 'reward': episode_best_reward}
+                                best_model = episode_best_model
+                        # print(best_model)
+                        # Train controller
+                        training_data = list(zip(candidate_states, episode_rewards))
+                        training_data.append((global_best['state'], global_best['reward']))
+                        training_data.append((previous_best['state'], previous_best['reward']))
+                        self.train_controller(controller, controller_optimizer, training_data,
+                                        previous_best['state'], global_best['state'])
+        
+                        # Decay exploration ratio
+                        epsilon = max(epsilon_min, epsilon - epsilon_decay)
 
-                # Decay exploration ratio
-                epsilon = max(epsilon_min, epsilon - epsilon_decay)
+                if pdt:
+                        trainer(self.teacher_model, best_model)
 
                 return best_model
