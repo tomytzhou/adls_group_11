@@ -60,15 +60,23 @@ Then we compute the mean square error between the projected student and teacher 
 
 $reward = (1 - loss_{MSE}) · (latency_S / (β · latency_T))^α$
 
+### LSTM Unit
+Our training loop includes a controller that uses past knowledge about model distillation to make prediction that selects the most promising candidates for the next episode. We used a LSTM unit as our controller. It takes as input the data of the global best model, the previous episode best model and all the candidates from the previous episode.
+
 ### Model Ranking
 
 After training all the selected candidate models during a single episode, we need to rank them based on their rewards. We store the best performing model and its config into the global best tuple. As well as the prevously best performing model in the last episode and its config. We also need to store the config of all the candidate models that we have selected in that episode. These cached models are then used to train the RL controller.
 
-### LSTM Unit
-Our training loop includes a controller that uses past knowledge about model distillation to make prediction that selects the most promising candidates for the next episode. We used a LSTM unit as our controller. It takes as input the data of the global best model, the previous episode best model and all the candidates from the previous episode.
+```python
+best_model.save_pretrained("distilled_model_dir0")
+tokenizer.save_pretrained("distilled_model_dir0")
 
 ### Full KD Trainer
 This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset. A step-by-step guide of the KD trainer can be found in the [docs/notebooks/kd.ipynb](docs/notebooks/kd.ipynb) notebook.
+
+```python
+best_model.save_pretrained("trained_model_dir0")
+tokenizer.save_pretrained("trained_model_dir0")
 
 ### GLUE Score Evaluation
 The GLUE benchmark is done through [run_glue.py](https://github.com/huggingface/transformers/blob/main/examples/pytorch/text-classification/run_glue.py), a standard GLUE evaluation script provided on the Huggingface GitHub repository. Examples of how the script was used during our testing can be found in the [docs/notebooks/glue.ipynb](docs/notebooks/glue.ipynb) notebook. Evaluation was done by following procedures outlined by the documentation of the language models used for teacher models, fine tuning the model to the given task dataset with 3-4 epochs, with batch size and learning rate matching with values seen in the documentation. 
