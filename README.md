@@ -72,3 +72,35 @@ This function is used to perform post KD finetuning to the best performing model
 
 ### GLUE Score Evaluation
 The GLUE benchmark is done through [run_glue.py](https://github.com/huggingface/transformers/blob/main/examples/pytorch/text-classification/run_glue.py), a standard GLUE evaluation script provided on the Huggingface GitHub repository. Examples of how the script was used during our testing can be found in the [docs/notebooks/glue.ipynb](docs/notebooks/glue.ipynb) notebook. Evaluation was done by following procedures outlined by the documentation of the language models used for teacher models, fine tuning the model to the given task dataset with 3-4 epochs, with batch size and learning rate matching with values seen in the documentation. 
+
+```python
+import os
+import json
+import shutil
+
+glue_tasks = ['cola', 'mnli', 'mrpc', 'qnli', 'qqp', 'rte', 'sst2', 'stsb', 'wnli']
+batch_sizes = [8, 16, 32, 64, 128]
+learning_rates = [3e-4, 1e-4, 5e-5, 3e-5]
+output_dirs = [f'saved_model_dir0', f'saved_model_dir1' ...]
+
+for output_dir in output_dirs:
+  for task in glue_tasks:
+    result_dir = f'results/{task}/0'
+    ! python run_glue.py \
+        --model_name_or_path {output_dir} \
+        --task_name {task} \
+        --do_train True\
+        --do_eval \
+        --per_device_train_batch_size 32 \
+        --learning_rate 1e-4 \
+        --num_train_epochs 4 \
+        --output_dir {result_dir} \
+        --report_to none
+    print(f'Task: {task} complete.')
+    print("")
+    torch.cuda.empty_cache()
+
+    if os.path.exists('/content/results'):
+      shutil.rmtree('/content/results')
+    if os.path.exists('/content/hf_cache'):
+      shutil.rmtree('/content/hf_cache')
