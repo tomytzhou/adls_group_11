@@ -70,6 +70,7 @@ After training all the selected candidate models during a single episode, we nee
 ```python
 best_model.save_pretrained("distilled_model_dir0")
 tokenizer.save_pretrained("distilled_model_dir0")
+```
 
 ### Full KD Trainer
 This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset. A step-by-step guide of the KD trainer can be found in the [docs/notebooks/kd.ipynb](docs/notebooks/kd.ipynb) notebook.
@@ -77,6 +78,7 @@ This function is used to perform post KD finetuning to the best performing model
 ```python
 best_model.save_pretrained("trained_model_dir0")
 tokenizer.save_pretrained("trained_model_dir0")
+```
 
 ### GLUE Score Evaluation
 The GLUE benchmark is done through [run_glue.py](https://github.com/huggingface/transformers/blob/main/examples/pytorch/text-classification/run_glue.py), a standard GLUE evaluation script provided on the Huggingface GitHub repository. Examples of how the script was used during our testing can be found in the [docs/notebooks/glue.ipynb](docs/notebooks/glue.ipynb) notebook. Evaluation was done by following procedures outlined by the documentation of the language models used for teacher models, fine tuning the model to the given task dataset with 3-4 epochs, with batch size and learning rate matching with values seen in the documentation. 
@@ -112,3 +114,4 @@ for output_dir in output_dirs:
       shutil.rmtree('/content/results')
     if os.path.exists('/content/hf_cache'):
       shutil.rmtree('/content/hf_cache')
+```
