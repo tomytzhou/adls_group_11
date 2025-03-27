@@ -68,7 +68,7 @@ Our training loop includes a controller that uses past knowledge about model dis
 After training all the selected candidate models during a single episode, we need to rank them based on their rewards. We store the best performing model and its config into the global best tuple. As well as the prevously best performing model in the last episode and its config. We also need to store the config of all the candidate models that we have selected in that episode. These cached models are then used to train the RL controller.
 
 ### Full KD Trainer
-This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset. A step-by-step guide of the KD trainer can be found in the [docs/notebooks/kd.ipynb](docs/notebooks/kd.ipynb) notebook. There's an option to disable or enable post distillation training using the `pdt=True` variable in the 
+This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset. A step-by-step guide of the KD trainer can be found in the [docs/notebooks/kd.ipynb](docs/notebooks/kd.ipynb) notebook. There's an option to enable post distillation training by setting `pdt=True` in the `run_rl_kd()` function.
 
 After the KD training, one can save the best performing model using the follow lines.
 
@@ -88,9 +88,7 @@ import json
 import shutil
 
 glue_tasks = ['cola', 'mnli', 'mrpc', 'qnli', 'qqp', 'rte', 'sst2', 'stsb', 'wnli']
-batch_sizes = [8, 16, 32, 64, 128]
-learning_rates = [3e-4, 1e-4, 5e-5, 3e-5]
-output_dirs = [f'distilled_model_dir0', f'trained_model_dir0' ...]
+output_dirs = [f'trained_model_dir0', f'trained_model_dir1' ...]
 
 for output_dir in output_dirs:
   for task in glue_tasks:
