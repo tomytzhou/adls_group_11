@@ -67,13 +67,10 @@ Our training loop includes a controller that uses past knowledge about model dis
 
 After training all the selected candidate models during a single episode, we need to rank them based on their rewards. We store the best performing model and its config into the global best tuple. As well as the prevously best performing model in the last episode and its config. We also need to store the config of all the candidate models that we have selected in that episode. These cached models are then used to train the RL controller.
 
-```python
-best_model.save_pretrained("distilled_model_dir0")
-tokenizer.save_pretrained("distilled_model_dir0")
-```
-
 ### Full KD Trainer
-This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset. A step-by-step guide of the KD trainer can be found in the [docs/notebooks/kd.ipynb](docs/notebooks/kd.ipynb) notebook.
+This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset. A step-by-step guide of the KD trainer can be found in the [docs/notebooks/kd.ipynb](docs/notebooks/kd.ipynb) notebook. There's an option to disable or enable post distillation training using the `pdt=True` variable in the 
+
+After the KD training, one can save the best performing model using the follow lines.
 
 ```python
 best_model.save_pretrained("trained_model_dir0")
@@ -83,6 +80,8 @@ tokenizer.save_pretrained("trained_model_dir0")
 ### GLUE Score Evaluation
 The GLUE benchmark is done through [run_glue.py](https://github.com/huggingface/transformers/blob/main/examples/pytorch/text-classification/run_glue.py), a standard GLUE evaluation script provided on the Huggingface GitHub repository. Examples of how the script was used during our testing can be found in the [docs/notebooks/glue.ipynb](docs/notebooks/glue.ipynb) notebook. Evaluation was done by following procedures outlined by the documentation of the language models used for teacher models, fine tuning the model to the given task dataset with 3-4 epochs, with batch size and learning rate matching with values seen in the documentation. 
 
+The following is an example of how to evaluate GLUE scores for trained models produces by the pipeline.
+
 ```python
 import os
 import json
@@ -91,7 +90,7 @@ import shutil
 glue_tasks = ['cola', 'mnli', 'mrpc', 'qnli', 'qqp', 'rte', 'sst2', 'stsb', 'wnli']
 batch_sizes = [8, 16, 32, 64, 128]
 learning_rates = [3e-4, 1e-4, 5e-5, 3e-5]
-output_dirs = [f'saved_model_dir0', f'saved_model_dir1' ...]
+output_dirs = [f'distilled_model_dir0', f'trained_model_dir0' ...]
 
 for output_dir in output_dirs:
   for task in glue_tasks:
