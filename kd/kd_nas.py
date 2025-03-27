@@ -1,19 +1,12 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from transformers import (
     AutoTokenizer,
-    AutoConfig,
     DataCollatorForLanguageModeling,
     AutoModelForMaskedLM,
-    AdamW
 )
-import numpy as np
-import time
 from datasets import load_dataset
 import logging
-import math
 import argparse
 import os
 import json

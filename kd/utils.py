@@ -2,7 +2,6 @@
 import torch
 import time
 import logging
-import math
 from transformers import AutoConfig, AutoModelForMaskedLM
 
 logger = logging.getLogger(__name__)
