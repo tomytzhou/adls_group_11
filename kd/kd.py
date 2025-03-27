@@ -72,6 +72,9 @@ class KD:
                 elif self.model_type == "roberta":
                         self.config_func = RobertaConfig
                         self.model_func = RobertaForMaskedLM
+                else:
+                        self.config_func = AutoConfig
+                        self.model_func = AutoModelForMaskedLM
 
                 self.checkpoint = checkpoint
                 self.dataset_name = dataset_name
@@ -109,14 +112,45 @@ class KD:
 
                 self.teacher_model = teacher_model
 
-                def get_search_space():
-                        return {
-                                "num_hidden_layers": [3, 4, 6, 10, 12],
-                                "num_attention_heads": [2, 3, 4, 6, 12],
-                                "hidden_size": [384, 768],
-                                "intermediate_size": [384, 512, 576, 768, 1024, 1536, 2048, 3072],
-                                "hidden_act": ['gelu', 'relu', 'silu']
-                        }
+                def get_search_space(self):
+                                teacher_config = self.teacher_model.config
+                                
+                                # Define ratios of the fraction of teacher model params used as student model params
+                                layer_ratios = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0]
+                                head_ratios = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0]
+                                hidden_size_ratios = [0.5, 0.75, 1.0]
+                                intermediate_ratios = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0]
+                                
+                                # Hidden layers
+                                hidden_layers = teacher_config.num_hidden_layers
+                                num_hidden_layers = [max(1, int(hidden_layers * ratio)) for ratio in layer_ratios]
+                                num_hidden_layers = sorted(list(set(num_hidden_layers)))
+                                
+                                # Attention heads
+                                attn_heads = teacher_config.num_attention_heads
+                                num_attention_heads = [max(1, int(attn_heads * ratio)) for ratio in head_ratios]
+                                num_attention_heads = sorted(list(set(num_attention_heads)))
+                                
+                                # Hidden size
+                                h_size = teacher_config.hidden_size
+                                hidden_size = [max(128, int(h_size * ratio)) for ratio in hidden_size_ratios]
+                                hidden_size = sorted(list(set(hidden_size)))
+                                
+                                # Intermediate size
+                                i_size = getattr(teacher_config, 'intermediate_size', h_size*4)
+                                intermediate_size = [max(128, int(i_size * ratio)) for ratio in intermediate_ratios]
+                                intermediate_size = sorted(list(set(intermediate_size)))
+                                
+                                # Activation functions - keep standard options
+                                hidden_act = ['gelu', 'relu', 'silu']
+                                
+                                return {
+                                        "num_hidden_layers": num_hidden_layers,
+                                        "num_attention_heads": num_attention_heads,
+                                        "hidden_size": hidden_size,
+                                        "intermediate_size": intermediate_size,
+                                        "hidden_act": hidden_act
+                                }
 
                 self.search_space = get_search_space()
                 self.state_keys = list(self.search_space.keys())
