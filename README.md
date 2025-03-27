@@ -29,6 +29,8 @@ Our pipeline can use either the built-in optimizer (optuna) or the reinforcement
 9. At the end of the last episode, the global best model will be selected for post NAS training. This step can be skipped if one wish to prevent overfitting or if the model has a fast converging nature.
 10. The trained best model will be tested using the glue score function.
 
+A Jupyter Notebook version of RL KD NAS pipeline can be found in [docs/notebooks/kd_nas_lstm.ipynb](docs/notebooks/kd_nas/lstm.ipynb).
+
 ![kd_pipeline_overview](docs/imgs/kd_pipeline_overview.jpg)
 
 ### Data Loader
@@ -38,7 +40,13 @@ This function uses a checkpoint of a pretrained model from Hugging face to load 
 This function uses the previously loaded checkpoints to construct a teacher model to be used for the distillation process.
 
 ### Construct Search Space
-Based on the teacher model, constrcut a dictionary of feasible architecture parameters for the student models. The config of the teacher model is used to create a range of config parameters to be used. This step is currently done manually.
+
+Based on the teacher model configuration, automatically construct a dictionary of feasible architecture parameters for the student models. The search space includes the following parameters:
+- **num_hidden_layers**: Number of transformer layers in the model
+- **num_attention_heads**: Number of attention heads in each layer
+- **hidden_size**: Dimension of the hidden representations
+- **intermediate_size**: Dimension of the feedforward network
+- **hidden_act**: Activation function used in the model
 
 ### Mini-KD
 
@@ -60,7 +68,7 @@ After training all the selected candidate models during a single episode, we nee
 Our training loop includes a controller that uses past knowledge about model distillation to make prediction that selects the most promising candidates for the next episode. We used a LSTM unit as our controller. It takes as input the data of the global best model, the previous episode best model and all the candidates from the previous episode.
 
 ### Full KD Trainer
-This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset.
+This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset. A step-by-step guide of the KD trainer can be found in the [docs/notebooks/kd.ipynb](docs/notebooks/kd.ipynb) notebook.
 
-### GLUE Score Calculator
-The function that evaluates the gleu score for each best performing model category on the target language tasks. Within the function a selection of language tasks are selected and their corresponding datasets are loaded using the datasets library. The function first uses the trainer module from the transformer library to finetune the model for a few epoches. There also an option to disable finetuning. It then uses the trainer module's built-in evaluation function to compute a score for the datasets previously loaded.
+### GLUE Score Evaluation
+The GLUE benchmark is done through [run_glue.py](https://github.com/huggingface/transformers/blob/main/examples/pytorch/text-classification/run_glue.py), a standard GLUE evaluation script provided on the Huggingface GitHub repository. Examples of how the script was used during our testing can be found in the [docs/notebooks/glue.ipynb](docs/notebooks/glue.ipynb) notebook. Evaluation was done by following procedures outlined by the documentation of the language models used for teacher models, fine tuning the model to the given task dataset with 3-4 epochs, with batch size and learning rate matching with values seen in the documentation. 
