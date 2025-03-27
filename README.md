@@ -23,7 +23,7 @@ Our pipeline can use either the built-in optimizer (optuna) or the reinforcement
 9. At the end of the last episode, the global best model will be selected for post NAS training. This step can be skipped if one wish to prevent overfitting or if the model has a fast converging nature.
 10. The trained best model will be tested using the glue score function.
 
-![Screenshot1](https://github.com/tomytzhou/adls_group_11/blob/main/WhatsApp%20Image%202025-03-26%20at%2015.25.43_56d0a755.jpg)
+![kd_pipeline_overview](docs/imgs/kd_pipeline_overview.jpg)
 
 ### Data loader
 This function uses a checkpoint of a pretrained model from Hugging face to load the dataset and the tokenizer.
@@ -37,7 +37,7 @@ Based on the teacher model, constrcut a dictionary of feasible architecture para
 ### Mini-KD
 For each hidden layers in the teacher model, we extract the hidden states of the layers. It does the same by extracting the hidden states from the student candidate model. And since the teacher layer hidden states will have equal or higher data width than the hidden states of the candidate models, we use a multi-layer mapping function and a projection layer to encode and align the hidden states of the teacher model to that of the student model. Then we conpute the mean square error between the 2 sets of hidden states. And finally we train the candidate model for a few epoches along with the projection layer. The candidate model will then be assigned a score, called reward, using its last epoch loss and its latency.
 
-![Screenshot2](https://github.com/tomytzhou/adls_group_11/blob/main/WhatsApp%20Image%202025-03-11%20at%2012.24.10_e6b2ee28.jpg)
+![kd_mapping](docs/imgs/kd_mapping.jpg)
 
 ### Model ranking
 After training all the selected candidate models during a single episode, we need to rank them based on their rewards. We store the best performing model and its config into the global best tuple. As well as the prevously best performing model in the last episode and its config. We also need to store the config of all the candidate models that we have selected in that episode. These cached models are then used to train the RL controller.
