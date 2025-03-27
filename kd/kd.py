@@ -178,78 +178,14 @@ class KD:
                         param.requires_grad = False
                 self.teacher_model = teacher_model
 
-                '''
-                Define model search space for NAS manually
-                # def get_search_space():
-                #         return {
-                #                 "num_hidden_layers": [3, 4, 6, 10, 12],
-                #                 "num_attention_heads": [2, 3, 4, 6, 12],
-                #                 "hidden_size": [384, 768],
-                #                 "intermediate_size": [384, 512, 576, 768, 1024, 1536, 2048, 3072],
-                #                 "hidden_act": ['gelu', 'relu', 'silu']
-                #         }'
-                '''
-
-                # Define model search space by automatically extracting config from teacher model
+                # Define model search space for NAS manually
                 def get_search_space():
-                        # Get the configuration object of the teacher model, which contains model architecture details
-                        teacher_config = self.teacher_model.config
-                        
-                        # Define ratios of the fraction of teacher model parameters to be used for student model
-                        # These ratios are used to create variations of the student model by reducing the number of layers, attention heads, etc.
-                        layer_ratios = [0.25, 0.33, 0.5, 0.66, 1.0]           # Fraction of teacher model layers used in the student model
-                        head_ratios = [0.25, 0.33, 0.5, 0.66, 1.0]            # Fraction of teacher model attention heads used in student model
-                        intermediate_ratios = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0]  # Fraction of teacher model intermediate size used in student model
-                        
-                        # Extract the number of attention heads from the teacher model's configuration
-                        attn_heads = teacher_config.num_attention_heads
-                        
-                        # For each ratio in the head_ratios, calculate the number of attention heads for the student model
-                        # We ensure the number of attention heads is at least 1 (i.e., no zero attention heads)
-                        num_attention_heads = [max(1, int(attn_heads * ratio)) for ratio in head_ratios]
-                        
-                        # Sort and remove duplicates from the list of attention heads sizes
-                        num_attention_heads = sorted(list(set(num_attention_heads)))
-                        
-                        # Extract the number of hidden layers from the teacher model's configuration
-                        hidden_layers = teacher_config.num_hidden_layers
-                        
-                        # For each ratio in the layer_ratios, calculate the number of hidden layers for the student model
-                        # We ensure the number of hidden layers is at least 1
-                        num_hidden_layers = [max(1, int(hidden_layers * ratio)) for ratio in layer_ratios]
-                        
-                        # Sort and remove duplicates from the list of hidden layer sizes
-                        num_hidden_layers = sorted(list(set(num_hidden_layers)))
-                        
-                        # Extract the hidden size (the size of each hidden layer) from the teacher model's configuration
-                        h_size = teacher_config.hidden_size
-                        
-                        # Define the hidden size for the student model based on the number of attention heads
-                        # The hidden size is typically related to the number of attention heads (e.g., num_attention_heads * 64)
-                        hidden_size = [num_attention_heads[-2] * 64, num_attention_heads[-1] * 64]
-                        
-                        # Extract the intermediate size (typically the size of the "feed-forward" layer) from the teacher's config
-                        # If no intermediate size is specified, default it to hidden_size * 4
-                        i_size = getattr(teacher_config, 'intermediate_size', h_size*4)
-                        
-                        # Calculate intermediate sizes for the student model based on intermediate_ratios
-                        # We ensure the intermediate size is at least 128
-                        intermediate_size = [max(128, int(i_size * ratio)) for ratio in intermediate_ratios]
-                        
-                        # Sort and remove duplicates from the list of intermediate sizes
-                        intermediate_size = sorted(list(set(intermediate_size)))
-                        
-                        # Define the activation functions that can be used for hidden layers
-                        # The common activation functions used in transformer models are 'gelu', 'relu', and 'silu'
-                        hidden_act = ['gelu', 'relu', 'silu']
-                        
-                        # Return a dictionary containing the search space for the student model
                         return {
-                                "num_hidden_layers": num_hidden_layers,         # List of possible numbers of hidden layers
-                                "num_attention_heads": num_attention_heads,     # List of possible numbers of attention heads
-                                "hidden_size": hidden_size,                      # List of possible hidden sizes
-                                "intermediate_size": intermediate_size,          # List of possible intermediate sizes
-                                "hidden_act": hidden_act                         # List of possible activation functions for hidden layers
+                                "num_hidden_layers": [3, 4, 6, 10, 12],
+                                "num_attention_heads": [2, 3, 4, 6, 12],
+                                "hidden_size": [384, 768],
+                                "intermediate_size": [384, 512, 576, 768, 1024, 1536, 2048, 3072],
+                                "hidden_act": ['gelu', 'relu', 'silu']
                         }
 
                 self.search_space = get_search_space()
