@@ -15,6 +15,7 @@ This repository is organized in the following order:
 - **kd/**: Contains the collection of functions and classes that implement the KD pipeline, ready to be imported and used
 - **tests/**: Unit testing of the components in **kd/**
 
+## Functionality Description
 ### Pipeline overview
 Our pipeline can use either the built-in optimizer (optuna) or the reinforcement learning optimizer. The main steps of the KD process is summarized below:
 1. Select a teacher model and a task dataset that can be used to train it.
@@ -30,28 +31,36 @@ Our pipeline can use either the built-in optimizer (optuna) or the reinforcement
 
 ![kd_pipeline_overview](docs/imgs/kd_pipeline_overview.jpg)
 
-### Data loader
+### Data Loader
 This function uses a checkpoint of a pretrained model from Hugging face to load the dataset and the tokenizer.
 
-### Construct teacher model
+### Construct Teacher Model
 This function uses the previously loaded checkpoints to construct a teacher model to be used for the distillation process.
 
-### Construct search space
+### Construct Search Space
 Based on the teacher model, constrcut a dictionary of feasible architecture parameters for the student models. The config of the teacher model is used to create a range of config parameters to be used. This step is currently done manually.
 
 ### Mini-KD
-For each hidden layers in the teacher model, we extract the hidden states of the layers. It does the same by extracting the hidden states from the student candidate model. And since the teacher layer hidden states will have equal or higher data width than the hidden states of the candidate models, we use a multi-layer mapping function and a projection layer to encode and align the hidden states of the teacher model to that of the student model. Then we conpute the mean square error between the 2 sets of hidden states. And finally we train the candidate model for a few epoches along with the projection layer. The candidate model will then be assigned a score, called reward, using its last epoch loss and its latency.
+
+Our KD process is done with hidden state distillation. The aim is to let the student learn the hidden state representations from the teacher model. To account for differences in layer sizes of the teacher and student, we chose a multi-layer mapping strategy that allows each student layer to learn from two teacher layers. For a student with $L^s$ layers and a teacher with $L^t$ layers, a single student layer $i$ will learn from the teacher layers $L^t-L^s+i$ (last strategy) and $i \left\lfloor \frac{L^T}{L^S} \right\rfloor$ (skip strategy). 
+
+Since a student layer can learn from two teacher layers, and the student model might have a smaller hidden state size, a linear projection of the student is used to map the student hidden states onto the teacher ones linearly, even if there are differences in hidden state sizes. This is done by using a learnable linear layer applied to each student layer that is also trained during the KD process. This linear layer projects a student layer with a hidden size $H_s$ to a size $2*H_t$. 
 
 ![kd_mapping](docs/imgs/kd_mapping.jpg)
 
-### Model ranking
+Then we compute the mean square error between the projected student and teacher hidden states. And finally we train the candidate model for a few epoches along with the projection layer. At the end the candidate model will be assigned a reward score, which is a combination of performance (MSE loss) and efficiency (latency). 
+
+$reward = (1 - loss_{MSE}) · (latency_S / (β · latency_T))^α$
+
+### Model Ranking
+
 After training all the selected candidate models during a single episode, we need to rank them based on their rewards. We store the best performing model and its config into the global best tuple. As well as the prevously best performing model in the last episode and its config. We also need to store the config of all the candidate models that we have selected in that episode. These cached models are then used to train the RL controller.
 
-### LSTM unit
+### LSTM Unit
 Our training loop includes a controller that uses past knowledge about model distillation to make prediction that selects the most promising candidates for the next episode. We used a LSTM unit as our controller. It takes as input the data of the global best model, the previous episode best model and all the candidates from the previous episode.
 
-### Full KD trainer
+### Full KD Trainer
 This function is used to perform post KD finetuning to the best performing model obtained from the NAS session. It works in the same way as the mini-KD function but uses the entire dataset.
 
-### GLUE score calculator
+### GLUE Score Calculator
 The function that evaluates the gleu score for each best performing model category on the target language tasks. Within the function a selection of language tasks are selected and their corresponding datasets are loaded using the datasets library. The function first uses the trainer module from the transformer library to finetune the model for a few epoches. There also an option to disable finetuning. It then uses the trainer module's built-in evaluation function to compute a score for the datasets previously loaded.
