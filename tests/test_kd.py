@@ -7,6 +7,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pytest
 import torch
 import torch.optim as optim
+import optuna
+from optuna.samplers import TPESampler
 from kd.kd import Controller, KD
 
 kd = KD(model_type='bert', checkpoint="bert-base-uncased", dataset_name="xu-song/cc100-samples")  # or your actual args
@@ -14,6 +16,7 @@ kd = KD(model_type='bert', checkpoint="bert-base-uncased", dataset_name="xu-song
 def test_reward_function():
     reward = kd.calculate_reward(loss=0.2, latency=0.03, teacher_latency=0.01)
     assert isinstance(reward, float)
+    assert reward == 0.6231565465489873
 
 @pytest.fixture
 def sample_search_space():
@@ -39,6 +42,7 @@ def test_controller_forward_output(controller):
     # Check the output is a single scalar tensor
     assert isinstance(output, torch.Tensor)
     assert output.dim() == 0  # scalar
+    assert output.dtype == torch.float32
 
 def test_student_model_construction():
     model_config = {
@@ -66,6 +70,7 @@ def test_mini_distillation_returns_loss():
     loss = kd.mini_kd_trainer(proxy_data, kd.teacher_model, student_model, epochs=1)
     
     assert isinstance(loss, float)
+    assert loss >= 0
 
 def test_trainer():
     print("Testing mini_kd_trainer() ...")
@@ -79,6 +84,7 @@ def test_trainer():
     loss = kd.trainer(kd.teacher_model, student_model, epochs=1)
     
     assert isinstance(loss, float)
+    assert loss >= 0
 
 @pytest.fixture
 def setup_controller_and_data():
@@ -115,6 +121,10 @@ def test_train_controller(setup_controller_and_data):
     assert isinstance(avg_loss, float)
     assert avg_loss >= 0.0
 
+    loss_epoch1 = avg_loss
+    loss_epoch2 = kd.train_controller(controller, optimizer, training_data, prev_best, global_best, epochs=1)
+    assert loss_epoch2 <= loss_epoch1
+
 
 def test_get_latency():
     config = {
@@ -126,3 +136,30 @@ def test_get_latency():
     avg_latency = kd.get_latency(config)
     assert isinstance(avg_latency, float)
     assert avg_latency > 0
+
+@pytest.fixture
+def optuna_study():
+    sampler = TPESampler()
+    study = optuna.create_study(direction="maximize", sampler=sampler)
+    trial = study.ask()
+    return study, trial
+
+def test_optuna_construct_student_model(optuna_study):
+
+    study, trial = optuna_study
+
+    model = kd.optuna_construct_student_model(trial)
+
+    assert model is not None
+    assert hasattr(model, 'forward')
+    assert isinstance(model, torch.nn.Module)
+
+def test_optuna_objective(optuna_study):
+
+    study, trial = optuna_study
+
+    reward = kd.objective(trial)
+
+    assert isinstance(reward, float)
+    assert reward > 0
+    assert "student_model" in trial.user_attrs
