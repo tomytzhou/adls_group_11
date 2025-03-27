@@ -116,9 +116,9 @@ class KD:
                                 teacher_config = self.teacher_model.config
                                 
                                 # Define ratios of the fraction of teacher model params used as student model params
-                                layer_ratios = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0]
-                                head_ratios = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0]
-                                hidden_size_ratios = [0.5, 0.75, 1.0]
+                                layer_ratios = [0.25, 0.33, 0.5, 0.66, 1.0]
+                                head_ratios = [0.25, 0.33, 0.5, 0.66, 1.0]
+                                hidden_size_ratios = [0.5, 1.0]
                                 intermediate_ratios = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0]
                                 
                                 # Hidden layers
